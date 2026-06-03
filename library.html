@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Your shared library on Ours." />
+    <title>Our Library — Ours</title>
+    <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="logo-link" href="index.html">
+          <img src="assets/logo.svg" alt="" width="44" height="30" />
+          Ours
+        </a>
+        <nav class="site-nav" aria-label="Main">
+          <a href="index.html" data-nav="index.html">Home</a>
+          <a href="search.html" data-nav="search.html">Explore</a>
+          <a href="library.html" data-nav="library.html">Our Library</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <h1 class="page-title">Our Library</h1>
+      <p class="page-subtitle">
+        Everything you've saved together. Stored on this device for now — sign-in coming later.
+      </p>
+
+      <div class="library-filters" id="libraryFilters">
+        <button type="button" class="tab-btn active" data-filter="all">All</button>
+        <button type="button" class="tab-btn" data-filter="movie">Movies</button>
+        <button type="button" class="tab-btn" data-filter="tv">TV</button>
+        <button type="button" class="tab-btn" data-filter="book">Books</button>
+        <button type="button" class="tab-btn" data-filter="youtube">YouTube</button>
+      </div>
+
+      <div id="libraryContent">
+        <div id="libraryGrid" class="results-grid"></div>
+        <div id="libraryEmpty" class="library-empty hidden">
+          <img src="assets/logo.svg" alt="" width="48" height="33" style="margin: 0 auto 16px; opacity: 0.6" />
+          <p>Nothing saved yet. Explore and tap <strong>Save to Ours</strong> on anything you love.</p>
+          <a class="btn btn-primary" href="search.html">Go explore</a>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <img class="footer-hearts" src="assets/logo.svg" alt="" width="32" height="22" />
+      <p>Made with ♥ for the two of you — Ours</p>
+    </footer>
+
+    <script src="js/common.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/library.js"></script>
+  </body>
+</html>

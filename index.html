@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Ours — discover and save movies, TV, books, and YouTube from around the world." />
+    <title>Ours — Everything you love, together</title>
+    <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="logo-link" href="index.html">
+          <img src="assets/logo.svg" alt="" width="44" height="30" />
+          Ours
+        </a>
+        <nav class="site-nav" aria-label="Main">
+          <a href="index.html" data-nav="index.html">Home</a>
+          <a href="search.html" data-nav="search.html">Explore</a>
+          <a href="library.html" data-nav="library.html">Our Library</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <img class="hero-logo" src="assets/logo.svg" alt="Ours — interlocking hearts" width="88" height="60" />
+        <h1>Ours</h1>
+        <p>
+          A cozy place for you and your people to discover movies, TV shows, books, and YouTube
+          from every corner of the world — and save what matters to both of you.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="search.html">Start exploring</a>
+          <a class="btn btn-secondary" href="library.html">Open our library</a>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>Browse by category</h2>
+        </div>
+        <div class="category-grid">
+          <a class="category-card movies" href="search.html?type=movie">
+            <div class="icon" aria-hidden="true">🎬</div>
+            <h3>Movies</h3>
+            <p>World cinema, blockbusters, indie gems — search and get recommendations.</p>
+          </a>
+          <a class="category-card tv" href="search.html?type=tv">
+            <div class="icon" aria-hidden="true">📺</div>
+            <h3>TV Shows</h3>
+            <p>Series from every country. Find your next binge together.</p>
+          </a>
+          <a class="category-card books" href="search.html?type=book">
+            <div class="icon" aria-hidden="true">📚</div>
+            <h3>Books</h3>
+            <p>Novels and non-fiction from global authors via Open Library.</p>
+          </a>
+          <a class="category-card youtube" href="search.html?type=youtube">
+            <div class="icon" aria-hidden="true">▶️</div>
+            <h3>YouTube</h3>
+            <p>Videos, docs, and creators — discover and save favorites.</p>
+          </a>
+        </div>
+      </section>
+
+      <section class="section" id="featured-section">
+        <div class="section-head">
+          <h2>Featured from around the world</h2>
+          <a class="btn btn-ghost btn-sm" href="search.html">See all →</a>
+        </div>
+        <div id="featuredGrid" class="results-grid">
+          <p class="search-status"><span class="loading-spinner"></span>Loading picks…</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <img class="footer-hearts" src="assets/logo.svg" alt="" width="32" height="22" />
+      <p>Made with ♥ for the two of you — Ours</p>
+    </footer>
+
+    <script src="js/common.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/home.js"></script>
+  </body>
+</html>
