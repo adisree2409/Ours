@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Link your partner on ours." />
+    <title>our bond — ours</title>
+    <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="logo-link" href="index.html">
+          <img src="assets/logo.svg" alt="" width="40" height="28" />
+          ours
+        </a>
+        <nav class="site-nav" aria-label="Main">
+          <a href="index.html" data-nav="index.html">home</a>
+          <a href="search.html" data-nav="search.html">explore</a>
+          <a href="library.html" data-nav="library.html">library</a>
+          <a href="partner.html" data-nav="partner.html" class="nav-partner">our bond</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <h1 class="page-title">our bond</h1>
+      <p class="page-subtitle">
+        Select your partner for a dedicated couple view — separate from following friends (coming in Phase 2 with Google sign-in).
+      </p>
+
+      <form id="partnerForm" class="partner-form glass-panel" style="padding: 24px">
+        <label for="partnerName">partner's name</label>
+        <input id="partnerName" type="text" placeholder="Who shares this library with you?" autocomplete="name" />
+        <div style="display: flex; gap: 12px; flex-wrap: wrap">
+          <button type="submit" class="btn btn-glow">link partner</button>
+          <button type="button" class="btn btn-ghost" id="clearPartner">clear</button>
+        </div>
+        <p id="partnerStatus" class="search-status" aria-live="polite"></p>
+      </form>
+
+      <div id="partnerCard"></div>
+    </main>
+
+    <footer class="site-footer">
+      <img class="footer-hearts" src="assets/logo.svg" alt="" width="28" height="20" />
+      <p>made with ♥ — ours</p>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/partner.js"></script>
+  </body>
+</html>

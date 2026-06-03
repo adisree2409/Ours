@@ -3,15 +3,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!grid) return;
 
   const categories = ["movie", "tv", "book", "youtube"];
-  const allFeatured = [];
+  grid.innerHTML = `<p class="search-status"><span class="loading-spinner"></span>curating picks…</p>`;
 
-  for (const cat of categories) {
-    try {
-      const picks = await getFeatured(cat);
-      allFeatured.push(...picks);
-    } catch (e) {
-      console.warn("Featured load failed for", cat, e);
-    }
+  const settled = await Promise.allSettled(categories.map((cat) => getFeatured(cat)));
+  const allFeatured = settled
+    .filter((r) => r.status === "fulfilled")
+    .flatMap((r) => r.value);
+
+  if (!allFeatured.length) {
+    grid.innerHTML = `<p class="search-status">Could not load featured items. Check API keys in config.</p>`;
+    return;
   }
 
   const shuffled = allFeatured.sort(() => Math.random() - 0.5).slice(0, 8);

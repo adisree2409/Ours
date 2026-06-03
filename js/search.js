@@ -78,7 +78,15 @@ async function runSearch(query) {
     const { results, recommendations } = await searchMedia(activeCategory, query);
 
     if (!results.length) {
-      status.textContent = "No results found. Try different spelling or a broader keyword.";
+      const cfg = getApiConfig();
+      let msg = "No results found. Try different spelling or a broader keyword.";
+      if ((activeCategory === "movie" || activeCategory === "tv") && !cfg.TMDB_API_KEY) {
+        msg += " (TMDB key missing — add js/config.js or GitHub Actions secrets.)";
+      }
+      if (activeCategory === "youtube" && !cfg.YOUTUBE_API_KEY) {
+        msg += " (YouTube key missing.)";
+      }
+      status.textContent = msg;
       status.classList.add("error");
       return;
     }

@@ -1,32 +1,59 @@
 /**
- * Ours — search & recommendations via free public APIs
- * Movies/TV: TMDB (optional key) + iTunes fallback
- * Books: Open Library + Google Books fallback
- * YouTube: Invidious public API (no key required)
+ * ours — search & recommendations (TMDB, YouTube Data API, Open Library)
  */
 
-const CONFIG = {
-  /** Get a free key at https://www.themoviedb.org/settings/api — paste below for richer movie/TV results */
-  TMDB_API_KEY: "",
-  /** Invidious instances rotate; first working one is used */
-  INVIDIOUS_INSTANCES: [
-    "https://inv.nadeko.net",
-    "https://invidious.nerdvpn.de",
-    "https://invidious.io.lol"
-  ]
-};
+function getApiConfig() {
+  const c = typeof window !== "undefined" && window.OURS_CONFIG ? window.OURS_CONFIG : {};
+  return {
+    TMDB_API_KEY: (c.TMDB_API_KEY || "").trim(),
+    YOUTUBE_API_KEY: (c.YOUTUBE_API_KEY || "").trim()
+  };
+}
 
 const CATEGORY_DEFAULTS = {
-  movie: ["Spirited Away", "Parasite", "Amélie", "Cinema Paradiso"],
-  tv: ["Breaking Bad", "Dark", "Squid Game", "Fleabag"],
-  book: ["One Hundred Years of Solitude", "Norwegian Wood", "The God of Small Things"],
-  youtube: ["travel documentary", "cooking tutorial", "science explained"]
+  movie: ["Parasite", "Interstellar", "Spirited Away", "The Grand Budapest Hotel"],
+  tv: ["Breaking Bad", "Severance", "The Bear", "Dark"],
+  book: ["Norwegian Wood", "The Midnight Library", "Project Hail Mary"],
+  youtube: ["cinematic video essay", "travel documentary 4k", "science explained"]
 };
 
-/**
- * @param {string} category
- * @param {string} query
- */
+const TMDB_IMG = "https://image.tmdb.org/t/p/w342";
+
+async function tmdbFetch(path) {
+  const { TMDB_API_KEY } = getApiConfig();
+  if (!TMDB_API_KEY) return null;
+  const url = `https://api.themoviedb.org/3${path}${path.includes("?") ? "&" : "?"}api_key=${TMDB_API_KEY}&language=en-US`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  return res.json();
+}
+
+function mapTmdbMovie(m) {
+  return {
+    id: String(m.id),
+    type: "movie",
+    title: m.title,
+    creator: m.vote_average ? `★ ${m.vote_average.toFixed(1)} TMDB` : "Film",
+    year: m.release_date ? m.release_date.slice(0, 4) : "",
+    image: m.poster_path ? `${TMDB_IMG}${m.poster_path}` : "",
+    link: `https://www.themoviedb.org/movie/${m.id}`,
+    overview: (m.overview || "").slice(0, 160)
+  };
+}
+
+function mapTmdbTv(t) {
+  return {
+    id: String(t.id),
+    type: "tv",
+    title: t.name,
+    creator: t.vote_average ? `★ ${t.vote_average.toFixed(1)} TMDB` : "Series",
+    year: t.first_air_date ? t.first_air_date.slice(0, 4) : "",
+    image: t.poster_path ? `${TMDB_IMG}${t.poster_path}` : "",
+    link: `https://www.themoviedb.org/tv/${t.id}`,
+    overview: (t.overview || "").slice(0, 160)
+  };
+}
+
 async function searchMedia(category, query) {
   const q = query.trim();
   if (!q) return { results: [], recommendations: [] };
@@ -37,11 +64,11 @@ async function searchMedia(category, query) {
   switch (category) {
     case "movie":
       results = await searchMovies(q);
-      recommendations = await getMovieRecommendations(q, results);
+      recommendations = await getMovieRecommendations(results);
       break;
     case "tv":
       results = await searchTV(q);
-      recommendations = await getTVRecommendations(q, results);
+      recommendations = await getTVRecommendations(results);
       break;
     case "book":
       results = await searchBooks(q);
@@ -59,73 +86,53 @@ async function searchMedia(category, query) {
 }
 
 async function searchMovies(query) {
-  if (CONFIG.TMDB_API_KEY) {
-    try {
-      const url = `https://api.themoviedb.org/3/search/movie?api_key=${CONFIG.TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=en-US&page=1`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        return (data.results || []).slice(0, 12).map((m) => ({
-          id: String(m.id),
-          type: "movie",
-          title: m.title,
-          creator: m.original_language ? `Lang: ${m.original_language.toUpperCase()}` : "Film",
-          year: m.release_date ? m.release_date.slice(0, 4) : "",
-          image: m.poster_path ? `https://image.tmdb.org/t/p/w342${m.poster_path}` : "",
-          link: `https://www.themoviedb.org/movie/${m.id}`,
-          overview: m.overview || ""
-        }));
-      }
-    } catch (e) {
-      console.warn("TMDB movie search failed", e);
-    }
+  const data = await tmdbFetch(`/search/movie?query=${encodeURIComponent(query)}&page=1`);
+  if (data?.results?.length) {
+    return data.results.slice(0, 12).map(mapTmdbMovie);
   }
-  return searchITunes(query, "movie");
+  return [];
 }
 
 async function searchTV(query) {
-  if (CONFIG.TMDB_API_KEY) {
-    try {
-      const url = `https://api.themoviedb.org/3/search/tv?api_key=${CONFIG.TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=en-US&page=1`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        return (data.results || []).slice(0, 12).map((t) => ({
-          id: String(t.id),
-          type: "tv",
-          title: t.name,
-          creator: t.original_language ? `Lang: ${t.original_language.toUpperCase()}` : "Series",
-          year: t.first_air_date ? t.first_air_date.slice(0, 4) : "",
-          image: t.poster_path ? `https://image.tmdb.org/t/p/w342${t.poster_path}` : "",
-          link: `https://www.themoviedb.org/tv/${t.id}`,
-          overview: t.overview || ""
-        }));
-      }
-    } catch (e) {
-      console.warn("TMDB TV search failed", e);
-    }
+  const data = await tmdbFetch(`/search/tv?query=${encodeURIComponent(query)}&page=1`);
+  if (data?.results?.length) {
+    return data.results.slice(0, 12).map(mapTmdbTv);
   }
-  return searchITunes(query, "tv");
+  return [];
 }
 
-async function searchITunes(query, media) {
+async function searchYouTube(query) {
+  const { YOUTUBE_API_KEY } = getApiConfig();
+  if (!YOUTUBE_API_KEY) return [];
   try {
-    const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=${media}&limit=12`;
-    const res = await fetch(url);
+    const params = new URLSearchParams({
+      part: "snippet",
+      type: "video",
+      q: query,
+      maxResults: "12",
+      key: YOUTUBE_API_KEY,
+      relevanceLanguage: "en",
+      safeSearch: "moderate"
+    });
+    const res = await fetch(`https://www.googleapis.com/youtube/v3/search?${params}`);
     if (!res.ok) return [];
     const data = await res.json();
-    return (data.results || []).map((item) => ({
-      id: String(item.trackId || item.collectionId || item.artistId),
-      type: media === "tvSeason" || media === "tv" ? "tv" : "movie",
-      title: item.trackName || item.collectionName || item.artistName,
-      creator: item.artistName || item.primaryGenreName || "",
-      year: item.releaseDate ? String(new Date(item.releaseDate).getFullYear()) : "",
-      image: item.artworkUrl100 ? item.artworkUrl100.replace("100x100", "600x600") : "",
-      link: item.trackViewUrl || item.collectionViewUrl || "#",
-      overview: item.longDescription || item.shortDescription || ""
-    }));
+    return (data.items || []).map((item) => {
+      const sn = item.snippet || {};
+      const thumbs = sn.thumbnails || {};
+      return {
+        id: item.id?.videoId || "",
+        type: "youtube",
+        title: sn.title || "Video",
+        creator: sn.channelTitle || "YouTube",
+        year: sn.publishedAt ? sn.publishedAt.slice(0, 4) : "",
+        image: thumbs.medium?.url || thumbs.default?.url || "",
+        link: item.id?.videoId ? `https://www.youtube.com/watch?v=${item.id.videoId}` : "#",
+        overview: (sn.description || "").slice(0, 120)
+      };
+    }).filter((v) => v.id);
   } catch (e) {
-    console.warn("iTunes search failed", e);
+    console.warn("YouTube search failed", e);
     return [];
   }
 }
@@ -133,7 +140,7 @@ async function searchITunes(query, media) {
 async function searchBooks(query) {
   const results = [];
   try {
-    const olUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=12&fields=key,title,author_name,first_publish_year,cover_i,language`;
+    const olUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=12&language=eng&fields=key,title,author_name,first_publish_year,cover_i`;
     const res = await fetch(olUrl);
     if (res.ok) {
       const data = await res.json();
@@ -146,7 +153,7 @@ async function searchBooks(query) {
           year: doc.first_publish_year ? String(doc.first_publish_year) : "",
           image: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : "",
           link: doc.key ? `https://openlibrary.org${doc.key}` : "#",
-          overview: doc.language ? `Languages: ${doc.language.join(", ")}` : ""
+          overview: ""
         });
       }
     }
@@ -156,7 +163,7 @@ async function searchBooks(query) {
 
   if (results.length < 4) {
     try {
-      const gbUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=8`;
+      const gbUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=8&langRestrict=en`;
       const res = await fetch(gbUrl);
       if (res.ok) {
         const data = await res.json();
@@ -170,7 +177,7 @@ async function searchBooks(query) {
             year: v.publishedDate ? v.publishedDate.slice(0, 4) : "",
             image: v.imageLinks?.thumbnail?.replace("http:", "https:") || "",
             link: v.infoLink || "#",
-            overview: v.description ? String(v.description).slice(0, 120) : ""
+            overview: (v.description || "").slice(0, 120)
           });
         }
       }
@@ -182,87 +189,35 @@ async function searchBooks(query) {
   return dedupeByTitle(results).slice(0, 12);
 }
 
-async function searchYouTube(query) {
-  for (const base of CONFIG.INVIDIOUS_INSTANCES) {
-    try {
-      const url = `${base}/api/v1/search?q=${encodeURIComponent(query)}&type=video&sort=relevance`;
-      const res = await fetch(url);
-      if (!res.ok) continue;
-      const data = await res.json();
-      return (data || []).slice(0, 12).map((v) => ({
-        id: v.videoId,
-        type: "youtube",
-        title: v.title,
-        creator: v.author || "YouTube",
-        year: v.published ? String(new Date(v.published * 1000).getFullYear()) : "",
-        image: v.videoThumbnails?.[0]?.url || "",
-        link: `https://www.youtube.com/watch?v=${v.videoId}`,
-        overview: v.description ? String(v.description).slice(0, 100) : ""
-      }));
-    } catch {
-      continue;
-    }
+async function getMovieRecommendations(results) {
+  if (!results[0]?.id) return [];
+  const data = await tmdbFetch(`/movie/${results[0].id}/recommendations?page=1`);
+  if (data?.results?.length) {
+    return data.results.slice(0, 6).map((m) => ({
+      ...mapTmdbMovie(m),
+      overview: "Recommended for you"
+    }));
   }
   return [];
 }
 
-async function getMovieRecommendations(query, results) {
-  if (CONFIG.TMDB_API_KEY && results[0]?.id) {
-    try {
-      const url = `https://api.themoviedb.org/3/movie/${results[0].id}/recommendations?api_key=${CONFIG.TMDB_API_KEY}&language=en-US&page=1`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        return (data.results || []).slice(0, 6).map((m) => ({
-          id: String(m.id),
-          type: "movie",
-          title: m.title,
-          creator: "Recommended",
-          year: m.release_date ? m.release_date.slice(0, 4) : "",
-          image: m.poster_path ? `https://image.tmdb.org/t/p/w342${m.poster_path}` : "",
-          link: `https://www.themoviedb.org/movie/${m.id}`,
-          overview: "Because you searched for similar films"
-        }));
-      }
-    } catch (e) {
-      console.warn("TMDB recommendations failed", e);
-    }
+async function getTVRecommendations(results) {
+  if (!results[0]?.id) return [];
+  const data = await tmdbFetch(`/tv/${results[0].id}/recommendations?page=1`);
+  if (data?.results?.length) {
+    return data.results.slice(0, 6).map((t) => ({
+      ...mapTmdbTv(t),
+      overview: "Recommended for you"
+    }));
   }
-  const seed = results[0]?.creator || query.split(" ")[0] || "drama";
-  return searchITunes(seed, "movie").then((r) => r.slice(0, 6));
-}
-
-async function getTVRecommendations(query, results) {
-  if (CONFIG.TMDB_API_KEY && results[0]?.id) {
-    try {
-      const url = `https://api.themoviedb.org/3/tv/${results[0].id}/recommendations?api_key=${CONFIG.TMDB_API_KEY}&language=en-US&page=1`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        return (data.results || []).slice(0, 6).map((t) => ({
-          id: String(t.id),
-          type: "tv",
-          title: t.name,
-          creator: "Recommended",
-          year: t.first_air_date ? t.first_air_date.slice(0, 4) : "",
-          image: t.poster_path ? `https://image.tmdb.org/t/p/w342${t.poster_path}` : "",
-          link: `https://www.themoviedb.org/tv/${t.id}`,
-          overview: "Because you searched for similar shows"
-        }));
-      }
-    } catch (e) {
-      console.warn("TMDB TV recs failed", e);
-    }
-  }
-  const alt = query.includes(" ") ? query.split(" ").slice(-1)[0] : "series";
-  return searchITunes(alt, "tv").then((r) => r.slice(0, 6));
+  return [];
 }
 
 async function getBookRecommendations(query, results) {
   const author = results[0]?.creator;
   if (author && author !== "Unknown author" && author !== "Unknown") {
     try {
-      const url = `https://openlibrary.org/search.json?author=${encodeURIComponent(author)}&limit=6&fields=key,title,author_name,first_publish_year,cover_i`;
+      const url = `https://openlibrary.org/search.json?author=${encodeURIComponent(author)}&limit=6&language=eng&fields=key,title,author_name,first_publish_year,cover_i`;
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
@@ -281,49 +236,22 @@ async function getBookRecommendations(query, results) {
       console.warn("Book author recs failed", e);
     }
   }
-  const subject = query.split(" ")[0] || "fiction";
-  try {
-    const url = `https://openlibrary.org/search.json?subject=${encodeURIComponent(subject)}&limit=6&fields=key,title,author_name,first_publish_year,cover_i`;
-    const res = await fetch(url);
-    if (res.ok) {
-      const data = await res.json();
-      return (data.docs || []).map((doc) => ({
-        id: doc.key,
-        type: "book",
-        title: doc.title,
-        creator: (doc.author_name && doc.author_name[0]) || "",
-        year: doc.first_publish_year ? String(doc.first_publish_year) : "",
-        image: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : "",
-        link: `https://openlibrary.org${doc.key}`,
-        overview: "Related reads"
-      }));
-    }
-  } catch (e) {
-    console.warn("Book subject recs failed", e);
-  }
   return [];
 }
 
 async function getYouTubeRecommendations(query, results) {
-  const channel = results[0]?.creator;
-  if (channel && channel !== "YouTube") {
-    const related = await searchYouTube(channel);
-    return related.filter((r) => r.id !== results[0]?.id).slice(0, 6);
+  if (results[0]?.creator) {
+    const related = await searchYouTube(`${results[0].creator} official`);
+    return related.filter((r) => r.id !== results[0].id).slice(0, 6);
   }
-  const words = query.split(" ").filter(Boolean);
-  const alt = words.length > 1 ? words.slice(0, -1).join(" ") : `${query} documentary`;
-  return searchYouTube(alt).then((r) => r.slice(0, 6));
+  return searchYouTube(`${query} related`).then((r) => r.slice(0, 6));
 }
 
-/**
- * Featured picks for home page (no search needed)
- * @param {string} category
- */
 async function getFeatured(category) {
   const picks = CATEGORY_DEFAULTS[category] || [];
   const random = picks[Math.floor(Math.random() * picks.length)];
   const { results } = await searchMedia(category, random);
-  return results.slice(0, 4);
+  return results.slice(0, 3);
 }
 
 function dedupeByTitle(items) {
@@ -336,11 +264,6 @@ function dedupeByTitle(items) {
   });
 }
 
-/**
- * Build a result card DOM element
- * @param {object} item
- * @param {{ showAdd?: boolean, showRemove?: boolean }} opts
- */
 function createResultCard(item, opts = {}) {
   const { showAdd = true, showRemove = false } = opts;
   const card = document.createElement("article");
@@ -349,9 +272,15 @@ function createResultCard(item, opts = {}) {
   card.dataset.type = item.type;
 
   const inLib = isInLibrary(item.id, item.type);
+  const libItem = inLib ? getLibraryItem(item.id, item.type) : null;
+  const ratingHtml =
+    libItem?.rating != null
+      ? `<div class="card-rating">${renderHeartRatingHtml(libItem.rating, { compact: true })}</div>`
+      : "";
+
   const posterContent = item.image
     ? `<img src="${escapeHtml(item.image)}" alt="" loading="lazy" />`
-    : typeEmoji(item.type);
+    : `<span class="poster-fallback">${typeEmoji(item.type)}</span>`;
 
   card.innerHTML = `
     <div class="result-poster">${posterContent}</div>
@@ -359,10 +288,12 @@ function createResultCard(item, opts = {}) {
       <span class="badge ${typeBadgeClass(item.type)}">${typeLabel(item.type)}</span>
       <h3>${escapeHtml(item.title)}</h3>
       <p class="result-meta">${escapeHtml(item.creator)}${item.year ? ` · ${escapeHtml(item.year)}` : ""}</p>
+      ${item.overview ? `<p class="result-overview">${escapeHtml(item.overview)}</p>` : ""}
+      ${ratingHtml}
       <div class="result-actions">
-        ${showAdd ? `<button type="button" class="btn btn-sm btn-secondary add-btn" ${inLib ? "disabled" : ""}>${inLib ? "Saved ♥" : "Save to Ours"}</button>` : ""}
-        ${showRemove ? `<button type="button" class="btn btn-sm btn-ghost remove-btn">Remove</button>` : ""}
-        ${item.link && item.link !== "#" ? `<a href="${escapeHtml(item.link)}" class="btn btn-sm btn-ghost" target="_blank" rel="noopener">View</a>` : ""}
+        ${showAdd ? `<button type="button" class="btn btn-sm btn-glow add-btn" ${inLib ? "disabled" : ""}>${inLib ? "saved ♥" : "save to ours"}</button>` : ""}
+        ${showRemove ? `<button type="button" class="btn btn-sm btn-ghost remove-btn">remove</button>` : ""}
+        ${item.link && item.link !== "#" ? `<a href="${escapeHtml(item.link)}" class="btn btn-sm btn-ghost" target="_blank" rel="noopener">view</a>` : ""}
       </div>
     </div>
   `;
@@ -370,18 +301,15 @@ function createResultCard(item, opts = {}) {
   const addBtn = card.querySelector(".add-btn");
   if (addBtn) {
     addBtn.addEventListener("click", () => {
-      const added = addToLibrary({
-        id: item.id,
-        type: item.type,
-        title: item.title,
-        creator: item.creator,
-        year: item.year,
-        image: item.image,
-        link: item.link
-      });
-      if (added) {
-        addBtn.textContent = "Saved ♥";
-        addBtn.disabled = true;
+      if (typeof openSaveModal === "function") {
+        openSaveModal(item, (saved) => {
+          addBtn.textContent = "saved ♥";
+          addBtn.disabled = true;
+          const html = renderHeartRatingHtml(saved.rating ?? 0, { compact: true });
+          const existing = card.querySelector(".card-rating");
+          if (existing) existing.outerHTML = `<div class="card-rating">${html}</div>`;
+          else card.querySelector(".result-actions")?.insertAdjacentHTML("beforebegin", `<div class="card-rating">${html}</div>`);
+        });
       }
     });
   }
@@ -401,7 +329,12 @@ function createResultCard(item, opts = {}) {
 function renderResultsGrid(container, items, opts) {
   container.innerHTML = "";
   if (!items.length) {
-    container.innerHTML = `<p class="search-status">No results found. Try another title or keyword.</p>`;
+    const cfg = getApiConfig();
+    let hint = "Try another title or keyword.";
+    if (!cfg.TMDB_API_KEY && (opts?.needsTmdb || true)) {
+      hint += " Ensure js/config.js is loaded with your API keys.";
+    }
+    container.innerHTML = `<p class="search-status">${hint}</p>`;
     return;
   }
   items.forEach((item) => container.appendChild(createResultCard(item, opts)));

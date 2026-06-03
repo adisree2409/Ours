@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Ours — discover and save movies, TV, books, and YouTube from around the world." />
-    <title>Ours — Everything you love, together</title>
+    <meta name="description" content="ours — discover and save movies, TV, books, and YouTube together." />
+    <title>ours — everything you love, together</title>
     <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="css/styles.css" />
   </head>
@@ -12,76 +12,79 @@
     <header class="site-header">
       <div class="header-inner">
         <a class="logo-link" href="index.html">
-          <img src="assets/logo.svg" alt="" width="44" height="30" />
-          Ours
+          <img src="assets/logo.svg" alt="" width="40" height="28" />
+          ours
         </a>
         <nav class="site-nav" aria-label="Main">
-          <a href="index.html" data-nav="index.html">Home</a>
-          <a href="search.html" data-nav="search.html">Explore</a>
-          <a href="library.html" data-nav="library.html">Our Library</a>
+          <a href="index.html" data-nav="index.html">home</a>
+          <a href="search.html" data-nav="search.html">explore</a>
+          <a href="library.html" data-nav="library.html">library</a>
+          <a href="partner.html" data-nav="partner.html" class="nav-partner">our bond</a>
         </nav>
       </div>
     </header>
 
     <main>
       <section class="hero">
-        <img class="hero-logo" src="assets/logo.svg" alt="Ours — interlocking hearts" width="88" height="60" />
-        <h1>Ours</h1>
+        <img class="hero-logo" src="assets/logo.svg" alt="ours — interlocking hearts" width="96" height="66" />
+        <h1>ours</h1>
         <p>
-          A cozy place for you and your people to discover movies, TV shows, books, and YouTube
-          from every corner of the world — and save what matters to both of you.
+          Discover movies, TV, books, and YouTube from around the world — rate with hearts,
+          save to your library, and share the journey with someone special.
         </p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="search.html">Start exploring</a>
-          <a class="btn btn-secondary" href="library.html">Open our library</a>
+          <a class="btn btn-glow" href="search.html">start exploring</a>
+          <a class="btn btn-ghost" href="library.html">open library</a>
         </div>
       </section>
 
       <section class="section">
         <div class="section-head">
-          <h2>Browse by category</h2>
+          <h2>browse by category</h2>
         </div>
         <div class="category-grid">
           <a class="category-card movies" href="search.html?type=movie">
             <div class="icon" aria-hidden="true">🎬</div>
-            <h3>Movies</h3>
-            <p>World cinema, blockbusters, indie gems — search and get recommendations.</p>
+            <h3>movies</h3>
+            <p>Global cinema via TMDB — search and personalized picks.</p>
           </a>
           <a class="category-card tv" href="search.html?type=tv">
             <div class="icon" aria-hidden="true">📺</div>
-            <h3>TV Shows</h3>
-            <p>Series from every country. Find your next binge together.</p>
+            <h3>tv shows</h3>
+            <p>Series from every region with smart recommendations.</p>
           </a>
           <a class="category-card books" href="search.html?type=book">
             <div class="icon" aria-hidden="true">📚</div>
-            <h3>Books</h3>
-            <p>Novels and non-fiction from global authors via Open Library.</p>
+            <h3>books</h3>
+            <p>English titles from Open Library and Google Books.</p>
           </a>
           <a class="category-card youtube" href="search.html?type=youtube">
             <div class="icon" aria-hidden="true">▶️</div>
-            <h3>YouTube</h3>
-            <p>Videos, docs, and creators — discover and save favorites.</p>
+            <h3>youtube</h3>
+            <p>Videos and creators via YouTube Data API.</p>
           </a>
         </div>
       </section>
 
       <section class="section" id="featured-section">
         <div class="section-head">
-          <h2>Featured from around the world</h2>
-          <a class="btn btn-ghost btn-sm" href="search.html">See all →</a>
+          <h2>featured worldwide</h2>
+          <a class="btn btn-ghost btn-sm" href="search.html">see all →</a>
         </div>
         <div id="featuredGrid" class="results-grid">
-          <p class="search-status"><span class="loading-spinner"></span>Loading picks…</p>
+          <p class="search-status"><span class="loading-spinner"></span>curating picks…</p>
         </div>
       </section>
     </main>
 
     <footer class="site-footer">
-      <img class="footer-hearts" src="assets/logo.svg" alt="" width="32" height="22" />
-      <p>Made with ♥ for the two of you — Ours</p>
+      <img class="footer-hearts" src="assets/logo.svg" alt="" width="28" height="20" />
+      <p>made with ♥ — ours</p>
     </footer>
 
+    <script src="js/config.js"></script>
     <script src="js/common.js"></script>
+    <script src="js/ratings.js"></script>
     <script src="js/api.js"></script>
     <script src="js/home.js"></script>
   </body>
